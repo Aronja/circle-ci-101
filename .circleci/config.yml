@@ -1,22 +1,40 @@
 version: 2
 jobs:
   one:
+  
     docker:
       - image: circleci/ruby:2.4.1
+      
     steps:
       - checkout
       - run: echo "A first hello"
-      - run: sleep 25
+      - mkdir -p workspace 
+      - run: echo "Check this out" > workspace/echo_output
+      - persist_to_workspace:
+          root: workspace
+          paths: echo_output
+          
   two:
+  
     docker:
       - image: circleci/ruby:2.4.1
+      
     steps:
       - checkout
       - run: echo "A more familiar hello"  
-      - run: sleep 25
+      - attach_workspace:
+          at: workspace
+      - run: | 
+          if [[$(cat workspace/echo_output) == "Check this out"]]; then 
+            echo "it worked"
+          else
+            echo "didn't work"; exit 1
+          fi
+      
 workflows:
   version: 2 
   one_and_two: 
     jobs:
       - one
-      - two
+      - two:
+          - requires: one 
